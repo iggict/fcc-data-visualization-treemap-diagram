@@ -23,7 +23,7 @@ const files = [
 
 const getFileById = (id) => files.filter((d) => d.id === id)[0];
 
-const defaultId = "movies";
+const defaultId = "kickstarter";
 
 /** Initialize general D3 elements */
 
@@ -86,7 +86,7 @@ const renderPage = (fileId) => {
 
   // Initialize diagram
 
-  const [svgWidth, svgHeight] = [900, 500];
+  const [svgWidth, svgHeight] = [1000, 650];
 
   const diagram = container
     .append("svg")
@@ -163,8 +163,44 @@ const renderPage = (fileId) => {
         .attr("data-name", (d) => d.data.name)
         .attr("data-category", (d) => d.data.category)
         .attr("data-value", (d) => d.data.value)
-        .attr("fill", (d) => colorScale(d.data.category));
+        .attr("fill", (d) => colorScale(d.data.category))
+      // text.style("fill", function(d) { return d3.hsl(color(d)).l > 0.5 ? "#000" : "#fff" })
+      ;
+  
+    const fontSize = 9;
+    
+    const textMargin = 3;
+    
+    const cellText = cellGroup
+      .append('text')
+      .attr('class', 'tile-text')
+      .attr("transform", (d) => `translate(${textMargin}, ${textMargin})`)
+      .selectAll('tspan')
+      .data(d => d.data.name.split(/(?=[A-Z][^A-Z])/g))
+      //.data(d => d.data.name.split(" "))
+      .enter()
+      .append('tspan')
+      .style("font-size", fontSize)
+      .attr('x', 0)
+      .attr('dy', fontSize)
+      .text(d => d)
+      //.each((p, j) => (console.log(d3.select(this).node())))
     })
+    
+        /*      
+    const cellText = cellGroup
+      .append('text')
+      .attr('class', 'tile-text')
+      .selectAll('tspan')
+      //.data(d => d.data.name.split(/(?=[A-Z][^A-Z])/g))
+      .data(d => d.data.name.split(" "))
+      .enter()
+      .append('tspan')
+      .attr('x', 4)
+      //.attr('y', (d, i) => (13 + i * 10))
+      .attr('dy', 10)
+      .text(d => d)    
+    }) */
     .catch((err) => console.error(err));
 };
 
