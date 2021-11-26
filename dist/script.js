@@ -96,24 +96,24 @@ const renderPage = (fileId) => {
     .attr("class", "tooltip");
   // Initialize diagram
 
-  const [svgWidth, svgHeight] = [960, 500];
+  const [diagramWidth, diagramHeight] = [960, 500];
 
-  const svgTop = 30;
+  const diagramTop = 30;
 
   const diagram = container
     .append("svg")
     .attr("id", "tree-map")
     .attr("class", "tree-map")
-    .attr("width", svgWidth)
-    .attr("height", svgHeight)
+    .attr("width", diagramWidth)
+    .attr("height", diagramHeight)
     .text(file.title)
-    .attr("transform", `translate(0, ${svgTop})`);
+    .attr("transform", `translate(0, ${diagramTop})`);
 
   // Initialize treemap
 
   const treemap = d3
     .treemap()
-    .size([svgWidth, svgHeight])
+    .size([diagramWidth, diagramHeight])
     .paddingInner(0.5) // Padding between each rectangle
     .padding(1.5);
 
@@ -226,7 +226,7 @@ const renderPage = (fileId) => {
 
       // Set dimensions
 
-      const legendWidth = 600;
+      const legendWidth = diagramWidth;
 
       const lg = {
         offset: 20,
@@ -258,7 +258,7 @@ const renderPage = (fileId) => {
 
       legendGroup = legend
         .append("g")
-        .attr("transform", "translate(30," + lg.offset + ")")
+        .attr("transform", "translate(120," + lg.offset + ")")
         .selectAll("g")
         .data(categories)
         .enter()
