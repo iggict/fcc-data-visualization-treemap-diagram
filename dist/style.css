@@ -54,6 +54,12 @@ h3 {
   color: #3a4264;
 }
 
+/* Cells */
+
+.tile-text {
+  /*font-size: 0.55rem;*/
+}
+
 /* File combobox */
 
 .selector-container {
