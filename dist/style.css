@@ -30,7 +30,7 @@ h3 {
   line-height: 1;
 }
 
-.container {
+.wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -39,8 +39,16 @@ h3 {
   width: 100vw;
 }
 
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Diagram */
+
 .tree-map {
-  top: 100px;
 }
 
 /* Headers */
@@ -52,12 +60,8 @@ h3 {
 
 .subtitle {
   color: #3a4264;
-}
-
-/* Cells */
-
-.tile-text {
-  /*font-size: 0.55rem;*/
+  font-size: 1.5rem;
+  margin-top: 10px;
 }
 
 /* File combobox */
@@ -77,7 +81,14 @@ h3 {
   outline: none;
 }
 
-/* Tooltip */ 
+/* Legend */
+
+.legend {
+  font-size: 0.9rem;
+  margin-top: 30px;
+}
+
+/* Tooltip */
 
 .tooltip {
   position: absolute;
@@ -92,12 +103,16 @@ h3 {
   pointer-events: none;
 }
 
+.tt-name {
+  font-weight: bold;
+}
+
+.tt-category {
+  text-transform: uppercase;
+}
+
 .tt-color {
   border-style: solid;
   border-width: 4px;
   border-radius: 2px;
-}
-
-.tt-name{
-  font-weight: bold;
 }
