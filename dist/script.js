@@ -86,7 +86,7 @@ const renderPage = (fileId) => {
 
   // Initialize diagram
 
-  const [svgWidth, svgHeight] = [1000, 650];
+  const [svgWidth, svgHeight] = [960, 600];
 
   const diagram = container
     .append("svg")
@@ -109,8 +109,8 @@ const renderPage = (fileId) => {
 
   /* 
     SchemeCategory20 is not provided anymore by last versions 
-    of D3. I create my own categorical scale taking values 
-    from the example.  
+    of D3. I hace created my own categorical scale taking 
+    values from the example.  
   */
   
   const interpolation = (c) => d3.interpolateHcl(c, '#0000CC')(0.1);
@@ -164,43 +164,55 @@ const renderPage = (fileId) => {
         .attr("data-category", (d) => d.data.category)
         .attr("data-value", (d) => d.data.value)
         .attr("fill", (d) => colorScale(d.data.category))
-      // text.style("fill", function(d) { return d3.hsl(color(d)).l > 0.5 ? "#000" : "#fff" })
       ;
   
-    const fontSize = 9;
-    
-    const textMargin = 3;
-    
-    const cellText = cellGroup
-      .append('text')
-      .attr('class', 'tile-text')
-      .attr("transform", (d) => `translate(${textMargin}, ${textMargin})`)
-      .selectAll('tspan')
-      .data(d => d.data.name.split(/(?=[A-Z][^A-Z])/g))
-      //.data(d => d.data.name.split(" "))
-      .enter()
-      .append('tspan')
-      .style("font-size", fontSize)
-      .attr('x', 0)
-      .attr('dy', fontSize)
-      .text(d => d)
-      //.each((p, j) => (console.log(d3.select(this).node())))
+      const fontSize = 9;
+
+      const textMargin = 2;
+
+      const cellText = cellGroup
+        .append('text')
+        .attr('class', 'tile-text')
+        .attr("transform", (d) => `translate(${textMargin}, ${textMargin})`)
+        .style("font-size", fontSize)
+        .attr('dy', fontSize)
+        .text(d => d.data.name)
+        .style("fill", function(d) { return d3.hsl(colorScale(d.data.category)).l > 0.5 ? "#000" : "#f5f5f5" })
+        /* Note: An arrow function does not create its own this context,
+          so this has its original meaning from the enclosing context.  */
+        .each(function(d, i) {
+          const selection = d3.select(this);
+          const cellWidth = d.x1 - d.x0;
+          const words = d.data.name.replace("/", " / ").split(/\s+/).reverse();
+          let word =""; 
+          let line = [];
+          let lineNumber = 0;
+          let lineHeight = 1.1; 
+          const y = selection.attr("y");
+          const dy = parseFloat(selection.attr("dy"));
+          let tspan = selection
+            .text(null)
+            .append("tspan")
+            .attr("x", 0)
+            .attr("y", y)
+            .attr("dy", dy);
+          while (word = words.pop()) {
+            line.push(word);
+            tspan.text(line.join(" "));
+            if (tspan.node().getComputedTextLength() > cellWidth - textMargin) {
+              line.pop();
+              tspan.text(line.join(" "));
+              line = [word];
+              tspan = selection
+                .append("tspan")
+                .attr("x", 0)
+                .attr("y", y)
+                .attr("dy", ++lineNumber * lineHeight + dy)
+                .text(word);
+            }
+          }
+        });
     })
-    
-        /*      
-    const cellText = cellGroup
-      .append('text')
-      .attr('class', 'tile-text')
-      .selectAll('tspan')
-      //.data(d => d.data.name.split(/(?=[A-Z][^A-Z])/g))
-      .data(d => d.data.name.split(" "))
-      .enter()
-      .append('tspan')
-      .attr('x', 4)
-      //.attr('y', (d, i) => (13 + i * 10))
-      .attr('dy', 10)
-      .text(d => d)    
-    }) */
     .catch((err) => console.error(err));
 };
 
