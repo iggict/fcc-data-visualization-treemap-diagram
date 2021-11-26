@@ -83,6 +83,15 @@ const renderPage = (fileId) => {
     .attr("id", "description")
     .attr("class", "subtitle")
     .text(file.description);
+  
+  // Initialize tooltip
+
+  const tooltip = d3
+    .select("body")
+    .append("div")
+    .attr("id", "tooltip")
+    .attr("class", "tooltip")
+  ;  
 
   // Initialize diagram
 
@@ -154,7 +163,7 @@ const renderPage = (fileId) => {
         .attr("class", "cell-group")
         .attr("transform", (d) => `translate(${d.x0}, ${d.y0})`);
 
-      const cell = cellGroup
+      const tile = cellGroup
         .append("rect")
         .attr("id", (d) => d.data.id)
         .attr("class", "tile")
@@ -164,22 +173,25 @@ const renderPage = (fileId) => {
         .attr("data-category", (d) => d.data.category)
         .attr("data-value", (d) => d.data.value)
         .attr("fill", (d) => colorScale(d.data.category))
-      ;
-  
+        .on("mousemove", mousemoveEvent)
+        .on("mouseout", mouseoutEvent);    
+       
       const fontSize = 9;
 
       const textMargin = 2;
 
-      const cellText = cellGroup
+      const tileText = cellGroup
         .append('text')
         .attr('class', 'tile-text')
         .attr("transform", (d) => `translate(${textMargin}, ${textMargin})`)
         .style("font-size", fontSize)
         .attr('dy', fontSize)
         .text(d => d.data.name)
-        .style("fill", function(d) { return d3.hsl(colorScale(d.data.category)).l > 0.5 ? "#000" : "#f5f5f5" })
+        .style("fill", function(d) { return d3.hsl(colorScale(d.data.category)).l > 0.5 ? "#262424" : "#f5f5f5" })
         /* Note: An arrow function does not create its own this context,
           so this has its original meaning from the enclosing context.  */
+        .on("mousemove", mousemoveEvent)  
+        .on("mouseout", mouseoutEvent) 
         .each(function(d, i) {
           const selection = d3.select(this);
           const cellWidth = d.x1 - d.x0;
@@ -212,8 +224,43 @@ const renderPage = (fileId) => {
             }
           }
         });
+    
+        /** Event functions 
+            We use the same event functions for tiles a tile texts. */
+    
+        // Mouse Move event
+      
+        function mousemoveEvent(event, d) {
+          tooltip.transition().duration(300).style("opacity", 0.8);
+
+          const tooltipInnerHtml = (item) => (
+            `<hr class="tt-color" 
+                 style="border-color: ${colorScale(item.category)}"/>
+             <span class="tt-name">${item.name}</span>
+             <br />
+             <span class="tt-category">${item.category}</span>
+             <br />
+             value: <span class="tt-value">${item.value}</span>`
+          );
+
+          const [xTooltipMargin, yTooltipMargin] = [20, -40];
+
+          tooltip
+            .style("top", (event.pageY || event.y) + yTooltipMargin + "px")
+            .style("left", (event.pageX || event.x) + xTooltipMargin + "px")
+            .attr("data-year", d.year)
+            .html(tooltipInnerHtml(d.data));
+        };  
+    
+        // Mouse Out event
+    
+        function mouseoutEvent(event, d){
+          tooltip.transition().duration(300).style("opacity", 0);
+        };
+    
     })
     .catch((err) => console.error(err));
 };
 
 renderPage(defaultId); // Render page for the first time
+
