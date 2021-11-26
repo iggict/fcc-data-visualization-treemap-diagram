@@ -5,7 +5,7 @@ const files = [
     id: "kickstarter",
     title: "Kickstarter Pledge",
     description: "Top 100 Most Pledged Kickstarter Campaigns Grouped By Category",
-    path: "https://cdn.freecodecamp.org/testable-projects-fcc/data/tree_map/video-game-sales-data.json"
+    path: "https://cdn.freecodecamp.org/testable-projects-fcc/data/tree_map/kickstarter-funding-data.json"
   },
   {
     id: "movies",
@@ -25,7 +25,7 @@ const getFileById = (id) => files.filter((d) => d.id === id)[0];
 
 const defaultId = "kickstarter";
 
-/** Initialize general D3 elements */
+/** Global elements initialization */
 
 // Main container
 
@@ -61,6 +61,7 @@ const options = fileSelector
 /********************/
 /** Content render **/
 /********************/
+// Combo selection changes the content of the page
 
 const renderPage = (fileId) => {
 
@@ -116,14 +117,13 @@ const renderPage = (fileId) => {
   // Create color scale
   // More info: https://observablehq.com/@d3/color-schemes
 
+  const interpolation = (c) => d3.interpolateHcl(c, '#0000CC')(0.1);
+
   /* 
     SchemeCategory20 is not provided anymore by last versions 
     of D3. I hace created my own categorical scale taking 
     values from the example.  
   */
-  
-  const interpolation = (c) => d3.interpolateHcl(c, '#0000CC')(0.1);
-    
   const colorScale = d3
     .scaleOrdinal()
     .range(
@@ -140,7 +140,7 @@ const renderPage = (fileId) => {
   d3.json(file.path)
     .then((data) => {
       
-    // Create hierarchy
+      /** Create hierarchy */
       // More info: https://github.com/d3/d3-hierarchy
 
       const hierarchy = d3
@@ -153,8 +153,10 @@ const renderPage = (fileId) => {
 
       treemap(hierarchy);
 
-      // Draw cells
+      /** Draw cells */
 
+      // Group of cells
+    
       const cellGroup = diagram
         .selectAll("g")
         .data(hierarchy.leaves())
@@ -163,6 +165,8 @@ const renderPage = (fileId) => {
         .attr("class", "cell-group")
         .attr("transform", (d) => `translate(${d.x0}, ${d.y0})`);
 
+      // Tile (rect)
+    
       const tile = cellGroup
         .append("rect")
         .attr("id", (d) => d.data.id)
@@ -175,9 +179,10 @@ const renderPage = (fileId) => {
         .attr("fill", (d) => colorScale(d.data.category))
         .on("mousemove", mousemoveEvent)
         .on("mouseout", mouseoutEvent);    
-       
-      const fontSize = 9;
 
+      // Tile Text
+    
+      const fontSize = 9;
       const textMargin = 2;
 
       const tileText = cellGroup
@@ -187,76 +192,159 @@ const renderPage = (fileId) => {
         .style("font-size", fontSize)
         .attr('dy', fontSize)
         .text(d => d.data.name)
-        .style("fill", function(d) { return d3.hsl(colorScale(d.data.category)).l > 0.5 ? "#262424" : "#f5f5f5" })
-        /* Note: An arrow function does not create its own this context,
-          so this has its original meaning from the enclosing context.  */
+        .style("fill", (d) => colorSwitcher(d.data.category))
         .on("mousemove", mousemoveEvent)  
         .on("mouseout", mouseoutEvent) 
         .each(function(d, i) {
           const selection = d3.select(this);
-          const cellWidth = d.x1 - d.x0;
-          const words = d.data.name.replace("/", " / ").split(/\s+/).reverse();
-          let word =""; 
-          let line = [];
-          let lineNumber = 0;
-          let lineHeight = 1.1; 
-          const y = selection.attr("y");
-          const dy = parseFloat(selection.attr("dy"));
-          let tspan = selection
-            .text(null)
-            .append("tspan")
-            .attr("x", 0)
-            .attr("y", y)
-            .attr("dy", dy);
-          while (word = words.pop()) {
-            line.push(word);
-            tspan.text(line.join(" "));
-            if (tspan.node().getComputedTextLength() > cellWidth - textMargin) {
-              line.pop();
-              tspan.text(line.join(" "));
-              line = [word];
-              tspan = selection
-                .append("tspan")
-                .attr("x", 0)
-                .attr("y", y)
-                .attr("dy", ++lineNumber * lineHeight + dy)
-                .text(word);
-            }
-          }
+          const width = d.x1 - d.x0 - textMargin;
+          const text = d.data.name;
+          textWrapper(text, selection, width)
         });
     
-        /** Event functions 
-            We use the same event functions for tiles a tile texts. */
+      /** Legends */
     
-        // Mouse Move event
+      // Set dimensions
+    
+      const [legendWidth, legendHeight] = [600, 300];
+    
+      const lg = {
+        offset: 10,
+        rectSize: 15,
+        hSpacing: 150,
+        vSpacing: 10,
+        textXOffset: 3, 
+        textYOffset: 2
+      }
+
+      const legendItemsPerRow = Math.floor(legendWidth / lg.hSpacing);
+   
+      // Get different categories
+    
+      const categories = hierarchy.leaves()
+        .map((nodes) => (nodes.data.category))
+        .filter((category, index, self) => self.indexOf(category) === index);
+    
+      // Legend 
+    
+      const legend = container
+        .append("svg")
+        .attr("id", "legend")
+        .attr("class", "legend")
+        .attr("width", legendWidth);
+     
+      // Legend group
+    
+      legendGroup = legend
+        .append('g')
+        // TODO 60
+        .attr('transform', 'translate(60,' + lg.offset + ')') 
+        .selectAll('g')
+        .data(categories)
+        .enter()
+        .append('g')
+        .attr('transform', function (d, i) {
+            const tx = (i % legendItemsPerRow) * lg.hSpacing;
+            const ty = (Math.floor(i / legendItemsPerRow) 
+                        * lg.rectSize + lg.vSpacing 
+                        * Math.floor(i / legendItemsPerRow));
+            return `translate(${tx},${ty})`
+         });       
+    
+      // Legend item (rect)
+    
+      const legendItem = legendGroup
+        .append("rect")
+        .attr("class", "legend-item")
+        .attr("width", lg.rectSize)
+        .attr("height", lg.rectSize)
+        .attr("fill", (d) => colorScale(d));
+
+      // Legend text 
+    
+      const legendText = legendGroup
+        .append("text")
+        .attr("class", "legend-text")
+        .attr("x", lg.rectSize + lg.textXOffset)
+        .attr("y", lg.rectSize + lg.textYOffset)
+        .text(d => d);
+  
       
-        function mousemoveEvent(event, d) {
-          tooltip.transition().duration(300).style("opacity", 0.8);
-
-          const tooltipInnerHtml = (item) => (
-            `<hr class="tt-color" 
-                 style="border-color: ${colorScale(item.category)}"/>
-             <span class="tt-name">${item.name}</span>
-             <br />
-             <span class="tt-category">${item.category}</span>
-             <br />
-             value: <span class="tt-value">${item.value}</span>`
-          );
-
-          const [xTooltipMargin, yTooltipMargin] = [20, -40];
-
-          tooltip
-            .style("top", (event.pageY || event.y) + yTooltipMargin + "px")
-            .style("left", (event.pageX || event.x) + xTooltipMargin + "px")
-            .attr("data-year", d.year)
-            .html(tooltipInnerHtml(d.data));
-        };  
+      /** Style functions */
     
-        // Mouse Out event
-    
-        function mouseoutEvent(event, d){
-          tooltip.transition().duration(300).style("opacity", 0);
-        };
+      // Color Switcher
+
+      function colorSwitcher(bgColor) {
+        return d3.hsl(colorScale(bgColor)).l > 0.5 
+          ? "#262424" 
+          : "#f5f5f5" 
+      }
+
+      // Text Wrapper
+
+      function textWrapper(text, selection, width) {
+        const words = text.replace("/", " / ").split(/\s+/).reverse();
+        let word =""; 
+        let line = [];
+        let lineNumber = 0;
+        let lineHeight = 1.1; 
+        const y = selection.attr("y");
+        const dy = parseFloat(selection.attr("dy"));
+        let tspan = selection
+        .text(null)
+        .append("tspan")
+        .attr("x", 0)
+        .attr("y", y)
+        .attr("dy", dy);
+        while (word = words.pop()) {
+          line.push(word);
+          tspan.text(line.join(" "));
+          if (tspan.node().getComputedTextLength() > width) {
+            line.pop();
+            tspan.text(line.join(" "));
+            line = [word];
+            tspan = selection
+              .append("tspan")
+              .attr("x", 0)
+              .attr("y", y)
+              .attr("dy", ++lineNumber * lineHeight + dy)
+              .text(word);
+          }
+        } 
+      }
+
+      /** Event functions */
+      // Note: We use the same event functions for tiles a tile texts.
+
+      // Mouse Move event
+
+      function mousemoveEvent(event, d) {
+        tooltip.transition().duration(300).style("opacity", 0.8);
+
+        const tooltipInnerHtml = (item) => (
+          `<hr class="tt-color" 
+                   style="border-color: ${colorScale(item.category)}"/>
+               <span class="tt-name">${item.name}</span>
+               <br />
+               <span class="tt-category">${item.category}</span>
+               <br />
+               value: <span class="tt-value">${item.value}</span>`
+        );
+
+        const [xTooltipMargin, yTooltipMargin] = [20, -40];
+
+        tooltip
+          .style("top", (event.pageY || event.y) + yTooltipMargin + "px")
+          .style("left", (event.pageX || event.x) + xTooltipMargin + "px")
+          .attr("data-value", d.data.value)
+          .html(tooltipInnerHtml(d.data));
+      };  
+
+      // Mouse Out event
+
+      function mouseoutEvent(event, d){
+        tooltip.transition().duration(300).style("opacity", 0);
+      };
     
     })
     .catch((err) => console.error(err));
